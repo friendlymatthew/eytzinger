@@ -9,10 +9,6 @@ struct AlignedVec<T>(Vec<MaybeUninit<T>>);
 pub struct EytzingerVec<T: Ord + Copy>(AlignedVec<T>);
 
 impl<T: Ord + Copy> EytzingerVec<T> {
-    pub fn new() -> EytzingerVec<T> {
-        Self(AlignedVec(Vec::new()))
-    }
-
     pub fn from_slice(a: &[T]) -> Self {
         let capacity = a.len() + 1;
         let mut b = Vec::with_capacity(capacity);
