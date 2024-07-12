@@ -4,7 +4,7 @@ use core::intrinsics::prefetch_read_data;
 use std::mem::MaybeUninit;
 
 #[repr(align(64))]
-pub struct AlignedVec<T>(Vec<MaybeUninit<T>>);
+struct AlignedVec<T>(Vec<MaybeUninit<T>>);
 
 pub struct EytzingerVec<T: Ord + Copy>(AlignedVec<T>);
 
@@ -36,7 +36,7 @@ impl<T: Ord + Copy> EytzingerVec<T> {
         }
     }
 
-    pub fn search(&self, x: T) -> usize {
+    pub fn search(&self, x: &T) -> usize {
         let mut k = 1;
         let n = self.0 .0.len();
 
@@ -46,12 +46,12 @@ impl<T: Ord + Copy> EytzingerVec<T> {
                 prefetch_read_data(prefetch_ptr, 3);
             }
 
-            k = 2 * k + (unsafe { self.0 .0[k].assume_init() } < x) as usize;
+            k = 2 * k + (unsafe { self.0 .0[k].assume_init() } < *x) as usize;
         }
 
         k >>= k.trailing_ones() + 1;
         let current = unsafe { self.0 .0[k].assume_init() };
-        k * (current == x) as usize
+        k * (current == *x) as usize
     }
 }
 
@@ -64,13 +64,13 @@ mod tests {
         let dat = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
         let eyt = EytzingerVec::from_slice(&dat);
 
-        let res = eyt.search(8);
+        let res = eyt.search(&8);
         assert_eq!(res, 1);
 
-        let res = eyt.search(2);
+        let res = eyt.search(&2);
         assert_eq!(res, 4);
 
-        let res = eyt.search(69);
+        let res = eyt.search(&69);
         assert_eq!(res, 0);
     }
 }
